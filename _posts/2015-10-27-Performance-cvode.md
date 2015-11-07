@@ -35,7 +35,8 @@ The source codes for both implementations can be found [on Github](https://githu
 
 Before timing the simulations I should note a few things.
 As said above, CVODE uses an variable-order, variable-step Adams-Moulton method for this kind of non-stiff problem, while in odeint I used a Runge-Kutta-Dopri5 algorithm, which has fixed order 5, but variable step-size.
-Algorithmically, the Adams-Moulton method should be superior in the sence that it should require less rhs function evaluations then the Dopri-5, but it contains fixed point iterations so the real-time performance behavior is unclear.
+A priori, it is not clear which of the two methods are more suitable for the problem at hand.
+Typically, the Adams-Moulton method requires less rhs function evaluations then the Dopri-5, but it contains fixed point iterations which is more complicated than the simple explicit computations in the Runge-Kutta stepper.
 Furthermore, the general advantage of odeint is that it is header only, which gives the compiler much better optimization opportunities than for the pre-compiled CVODE.
 
 The source codes can be found [here](https://github.com/mariomulansky/cvode_playground/tree/master/lorenz_perf) and are compiled with gcc/g++ 4.8.4 using -Ofast to get best performance and run on my Intel Core i5-3210M CPU @ 2.50GHz.
@@ -49,6 +50,8 @@ odeint:
 
 This is highly surprising!
 Although the odeint algorithm requires almost twice as many calls to the lorenz function, it overall runs about **30 times faster** than CVODE (0.07s vs 2.2s).
+However, this is not a fair comparison, as it might be that the Adams-Moulton method is inferior to the simpler Runge-Kutta-Dopri5 for such a small and simple system as the Lorenz model.
+
 
 ## Measuring Flops
 
@@ -63,7 +66,7 @@ odeint:
 ![odeint FLOPS](/images/cvode/odeint_flops.jpg "odeint Flops")
 
 As seen in these screenshots, the odeint code produces almost 10 times the FLOPS of the CVODE version (2300 MFlops/s vs 255 MFlops/s).
-This already gives a good idea of why the CVODE code is much slower: While odeint is able to make very good use of the available CPU power, CVODE has very bad CPU utilization in this example.
+This is now a clear sign that the odeint-based simulation is superior: While odeint is able to make very good use of the available CPU power, CVODE has very bad CPU utilization in this example.
 This is probably due to being a pre-compiled library, for CVODE based code the compiler can not make use of function inlining which might result in significant performance penalties.
 
 ## Analyzing the Call Graph
